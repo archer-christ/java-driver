@@ -17,6 +17,7 @@ package com.datastax.oss.driver.api.core.specex;
 
 import com.datastax.oss.driver.api.core.Cluster;
 import com.datastax.oss.driver.api.core.CqlIdentifier;
+import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.session.Request;
 
 /**
@@ -26,6 +27,8 @@ import com.datastax.oss.driver.api.core.session.Request;
 public interface SpeculativeExecutionPolicy extends AutoCloseable {
 
   /**
+   * @param node the node that caused the speculative execution (that is, the node that was queried
+   *     previously but was too slow to answer)
    * @param keyspace the CQL keyspace currently associated to the session. This is set either
    *     through {@link Cluster#connect(CqlIdentifier)} or by manually executing a {@code USE} CQL
    *     statement. It can be {@code null} if the session has no keyspace.
@@ -37,7 +40,7 @@ public interface SpeculativeExecutionPolicy extends AutoCloseable {
    * @return the time (in milliseconds) until a speculative request is sent to the next node, or 0
    *     to send it immediately, or a negative value to stop sending requests.
    */
-  long nextExecution(CqlIdentifier keyspace, Request request, int runningExecutions);
+  long nextExecution(Node node, CqlIdentifier keyspace, Request request, int runningExecutions);
 
   /** Called when the cluster that this policy is associated with closes. */
   @Override
