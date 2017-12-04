@@ -382,12 +382,11 @@ public abstract class CqlRequestHandlerBase {
         }
       } else {
         LOG.debug("[{}] Request sent on {}", logPrefix, channel);
+        inFlightCallbacks.add(this);
         if (result.isDone()) {
-          // If the handler completed since the last time we checked, cancel directly because we
-          // don't know if cancelScheduledTasks() has run yet
+          // Cancel directly because we don't know if cancelScheduledTasks() saw the addition above
+          // (cancelling is idempotent)
           cancel();
-        } else {
-          inFlightCallbacks.add(this);
         }
       }
     }
