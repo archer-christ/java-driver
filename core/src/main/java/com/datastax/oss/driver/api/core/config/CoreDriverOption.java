@@ -45,10 +45,6 @@ public enum CoreDriverOption implements DriverOption {
   REQUEST_SERIAL_CONSISTENCY("request.serial-consistency", true),
   REQUEST_WARN_IF_SET_KEYSPACE("request.warn-if-set-keyspace", true),
   REQUEST_DEFAULT_IDEMPOTENCE("request.default-idempotence", true),
-  RETRY_POLICY_CLASS("request.retry-policy.class", true),
-  SPECULATIVE_EXECUTION_POLICY_CLASS("request.speculative-execution-policy.class", true),
-  SPECULATIVE_EXECUTION_MAX("request.speculative-execution-policy.max-executions", false),
-  SPECULATIVE_EXECUTION_DELAY("request.speculative-execution-policy.delay", false),
   REQUEST_TRACE_ATTEMPTS("request.trace.attempts", true),
   REQUEST_TRACE_INTERVAL("request.trace.interval", true),
   REQUEST_TRACE_CONSISTENCY("request.trace.consistency", true),
@@ -68,6 +64,12 @@ public enum CoreDriverOption implements DriverOption {
   LOAD_BALANCING_POLICY_CLASS("load-balancing-policy.class", true),
   LOAD_BALANCING_LOCAL_DATACENTER("load-balancing-policy.local-datacenter", false),
   LOAD_BALANCING_FILTER_CLASS("load-balancing-policy.filter.class", false),
+
+  RETRY_POLICY_CLASS("retry-policy.class", true),
+
+  SPECULATIVE_EXECUTION_POLICY_CLASS("speculative-execution.policy.class", true),
+  SPECULATIVE_EXECUTION_MAX("speculative-execution.policy.max-executions", false),
+  SPECULATIVE_EXECUTION_DELAY("speculative-execution.policy.delay", false),
 
   RECONNECTION_POLICY_CLASS("connection.reconnection-policy.class", true),
   RECONNECTION_BASE_DELAY("connection.reconnection-policy.base-delay", false),
