@@ -15,6 +15,8 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
+import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy;
 import com.datastax.oss.driver.api.core.loadbalancing.LoadBalancingPolicy.DistanceReporter;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
@@ -55,6 +57,8 @@ public class LoadBalancingPolicyWrapperTest {
   private Queue<Node> policysQueryPlan;
 
   @Mock private InternalDriverContext context;
+  @Mock private DriverConfig config;
+  @Mock private DriverConfigProfile defaultConfigProfile;
   @Mock private LoadBalancingPolicy loadBalancingPolicy;
   private EventBus eventBus;
   @Mock private MetadataManager metadataManager;
@@ -66,9 +70,12 @@ public class LoadBalancingPolicyWrapperTest {
   public void setup() {
     MockitoAnnotations.initMocks(this);
 
-    node1 = new DefaultNode(new InetSocketAddress("127.0.0.1", 9042));
-    node2 = new DefaultNode(new InetSocketAddress("127.0.0.2", 9042));
-    node3 = new DefaultNode(new InetSocketAddress("127.0.0.3", 9042));
+    Mockito.when(context.config()).thenReturn(config);
+    Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfigProfile);
+
+    node1 = new DefaultNode(new InetSocketAddress("127.0.0.1", 9042), context);
+    node2 = new DefaultNode(new InetSocketAddress("127.0.0.2", 9042), context);
+    node3 = new DefaultNode(new InetSocketAddress("127.0.0.3", 9042), context);
 
     contactPointsMap =
         ImmutableMap.<InetSocketAddress, Node>builder()

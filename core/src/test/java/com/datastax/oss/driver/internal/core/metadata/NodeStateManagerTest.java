@@ -82,8 +82,8 @@ public class NodeStateManagerTest {
     Mockito.when(nettyOptions.adminEventExecutorGroup()).thenReturn(adminEventLoopGroup);
     Mockito.when(context.nettyOptions()).thenReturn(nettyOptions);
 
-    node1 = new DefaultNode(new InetSocketAddress("127.0.0.1", 9042));
-    node2 = new DefaultNode(new InetSocketAddress("127.0.0.2", 9042));
+    node1 = new DefaultNode(new InetSocketAddress("127.0.0.1", 9042), context);
+    node2 = new DefaultNode(new InetSocketAddress("127.0.0.2", 9042), context);
     ImmutableMap<InetSocketAddress, Node> nodes =
         ImmutableMap.<InetSocketAddress, Node>builder()
             .put(node1.getConnectAddress(), node1)

@@ -15,19 +15,41 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
+import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
 import java.util.Map;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
 
+@RunWith(MockitoJUnitRunner.class)
 public class AddNodeRefreshTest {
+
   private static final InetSocketAddress ADDRESS1 = new InetSocketAddress("127.0.0.1", 9042);
   private static final InetSocketAddress ADDRESS2 = new InetSocketAddress("127.0.0.2", 9042);
 
-  private static final DefaultNode node1 = new DefaultNode(ADDRESS1);
+  @Mock private InternalDriverContext context;
+  @Mock private DriverConfig config;
+  @Mock private DriverConfigProfile defaultConfigProfile;
+
+  private DefaultNode node1;
+
+  @Before
+  public void setup() throws Exception {
+    Mockito.when(context.config()).thenReturn(config);
+    Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfigProfile);
+
+    node1 = new DefaultNode(ADDRESS1, context);
+  }
 
   @Test
   public void should_add_new_node() {
@@ -39,7 +61,7 @@ public class AddNodeRefreshTest {
             .withDatacenter("dc1")
             .withRack("rack2")
             .build();
-    AddNodeRefresh refresh = new AddNodeRefresh(newNodeInfo, "test");
+    AddNodeRefresh refresh = new AddNodeRefresh(newNodeInfo, context, "test");
 
     // When
     MetadataRefresh.Result result = refresh.compute(oldMetadata, false);
@@ -63,7 +85,7 @@ public class AddNodeRefreshTest {
             .withDatacenter("dc1")
             .withRack("rack2")
             .build();
-    AddNodeRefresh refresh = new AddNodeRefresh(newNodeInfo, "test");
+    AddNodeRefresh refresh = new AddNodeRefresh(newNodeInfo, context, "test");
 
     // When
     MetadataRefresh.Result result = refresh.compute(oldMetadata, false);

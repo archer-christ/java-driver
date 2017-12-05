@@ -64,12 +64,19 @@ public enum CoreDriverOption implements DriverOption {
   LOAD_BALANCING_POLICY_CLASS("load-balancing-policy.class", true),
   LOAD_BALANCING_LOCAL_DATACENTER("load-balancing-policy.local-datacenter", false),
   LOAD_BALANCING_FILTER_CLASS("load-balancing-policy.filter.class", false),
+  LOAD_BALANCING_SLOW_RATE("load-balancing-policy.slow-node-inclusion-rate", false),
 
   RETRY_POLICY_CLASS("retry-policy.class", true),
 
   SPECULATIVE_EXECUTION_POLICY_CLASS("speculative-execution.policy.class", true),
   SPECULATIVE_EXECUTION_MAX("speculative-execution.policy.max-executions", false),
   SPECULATIVE_EXECUTION_DELAY("speculative-execution.policy.delay", false),
+  SPECULATIVE_EXECUTION_TRACKING_ENABLED("speculative-execution.tracking.enabled", true),
+  SPECULATIVE_EXECUTION_TRACKING_PERIOD("speculative-execution.tracking.period", false),
+  SPECULATIVE_EXECUTION_TRACKING_SLOW_THRESHOLD(
+      "speculative-execution.tracking.normal-to-slow-threshold", false),
+  SPECULATIVE_EXECUTION_TRACKING_NORMAL_THRESHOLD(
+      "speculative-execution.tracking.slow-to-normal-threshold", false),
 
   RECONNECTION_POLICY_CLASS("connection.reconnection-policy.class", true),
   RECONNECTION_BASE_DELAY("connection.reconnection-policy.base-delay", false),

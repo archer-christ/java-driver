@@ -16,9 +16,13 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.CassandraVersion;
+import com.datastax.oss.driver.api.core.config.CoreDriverOption;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.metadata.NodeState;
+import com.datastax.oss.driver.internal.core.util.MovingPercentage;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Collections;
@@ -50,12 +54,28 @@ public class DefaultNode implements Node {
 
   volatile NodeDistance distance;
 
-  public DefaultNode(InetSocketAddress connectAddress) {
+  private final MovingPercentage speculativeExecutionPercentage;
+
+  public DefaultNode(InetSocketAddress connectAddress, DriverContext context) {
     this.connectAddress = connectAddress;
     this.state = NodeState.UNKNOWN;
     this.distance = NodeDistance.IGNORED;
     this.rawTokens = Collections.emptySet();
     this.extras = Collections.emptyMap();
+
+    DriverConfigProfile config = context.config().getDefaultProfile();
+    if (config.getBoolean(CoreDriverOption.SPECULATIVE_EXECUTION_TRACKING_ENABLED)) {
+      long period =
+          config.getDuration(CoreDriverOption.SPECULATIVE_EXECUTION_TRACKING_PERIOD).toMillis();
+      int slowThreshold =
+          config.getInt(CoreDriverOption.SPECULATIVE_EXECUTION_TRACKING_SLOW_THRESHOLD);
+      int normalThreshold =
+          config.getInt(CoreDriverOption.SPECULATIVE_EXECUTION_TRACKING_NORMAL_THRESHOLD);
+      this.speculativeExecutionPercentage =
+          new MovingPercentage(0, period, slowThreshold, normalThreshold);
+    } else {
+      this.speculativeExecutionPercentage = null;
+    }
   }
 
   @Override
@@ -110,6 +130,22 @@ public class DefaultNode implements Node {
   @Override
   public NodeDistance getDistance() {
     return distance;
+  }
+
+  public void recordSpeculativeExecution() {
+    if (speculativeExecutionPercentage != null) {
+      speculativeExecutionPercentage.recordHit();
+    }
+  }
+
+  public void recordSuccessfulExecution() {
+    if (speculativeExecutionPercentage != null) {
+      speculativeExecutionPercentage.recordMiss();
+    }
+  }
+
+  public boolean isSlow() {
+    return speculativeExecutionPercentage != null && speculativeExecutionPercentage.isHigh();
   }
 
   @Override

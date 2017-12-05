@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -26,8 +27,8 @@ public class AddNodeRefresh extends NodesRefresh {
 
   @VisibleForTesting final NodeInfo newNodeInfo;
 
-  AddNodeRefresh(NodeInfo newNodeInfo, String logPrefix) {
-    super(logPrefix);
+  AddNodeRefresh(NodeInfo newNodeInfo, DriverContext context, String logPrefix) {
+    super(context, logPrefix);
     this.newNodeInfo = newNodeInfo;
   }
 
@@ -37,7 +38,7 @@ public class AddNodeRefresh extends NodesRefresh {
     if (oldNodes.containsKey(newNodeInfo.getConnectAddress())) {
       return new Result(oldMetadata);
     } else {
-      DefaultNode newNode = new DefaultNode(newNodeInfo.getConnectAddress());
+      DefaultNode newNode = new DefaultNode(newNodeInfo.getConnectAddress(), context);
       copyInfos(newNodeInfo, newNode, null, logPrefix);
       Map<InetSocketAddress, Node> newNodes =
           ImmutableMap.<InetSocketAddress, Node>builder()

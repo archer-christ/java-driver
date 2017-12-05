@@ -480,7 +480,7 @@ public class NodeStateIT {
       // The order of the calls is not deterministic because contact points are shuffled, but it
       // does not matter here since Mockito.verify does not enforce order.
       Mockito.verify(localNodeStateListener, timeout(500))
-          .onRemove(new DefaultNode(wrongContactPoint));
+          .onRemove(new DefaultNode(wrongContactPoint, driverContext));
       Mockito.verify(localNodeStateListener, timeout(500)).onUp(localMetadataNode1);
       Mockito.verify(localNodeStateListener, timeout(500)).onAdd(localMetadataNode2);
 

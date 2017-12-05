@@ -41,6 +41,7 @@ import com.datastax.oss.driver.internal.core.adminrequest.AdminRequestHandler;
 import com.datastax.oss.driver.internal.core.channel.DriverChannel;
 import com.datastax.oss.driver.internal.core.channel.ResponseCallback;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
 import com.datastax.oss.driver.internal.core.session.RepreparePayload;
 import com.datastax.oss.driver.internal.core.util.Loggers;
@@ -262,6 +263,7 @@ public abstract class CqlRequestHandlerBase {
       AsyncResultSet resultSet =
           Conversions.toResultSet(resultMessage, executionInfo, session, context);
       if (result.complete(resultSet)) {
+        ((DefaultNode) callback.node).recordSuccessfulExecution();
         cancelScheduledTasks();
       }
     } catch (Throwable error) {
@@ -376,6 +378,7 @@ public abstract class CqlRequestHandlerBase {
                             "[{}] Starting speculative execution {}",
                             CqlRequestHandlerBase.this.logPrefix,
                             nextExecution);
+                        ((DefaultNode) node).recordSpeculativeExecution();
                         activeExecutionsCount.incrementAndGet();
                         startedSpeculativeExecutionsCount.incrementAndGet();
                         sendRequest(null, nextExecution, 0, true);

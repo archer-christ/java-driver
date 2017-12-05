@@ -15,13 +15,17 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
+import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.net.InetSocketAddress;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import static com.datastax.oss.driver.Assertions.assertThat;
@@ -33,11 +37,21 @@ public class FullNodeListRefreshTest {
   private static final InetSocketAddress ADDRESS2 = new InetSocketAddress("127.0.0.2", 9042);
   private static final InetSocketAddress ADDRESS3 = new InetSocketAddress("127.0.0.3", 9042);
 
-  private static final DefaultNode node1 = new DefaultNode(ADDRESS1);
-  private static final DefaultNode node2 = new DefaultNode(ADDRESS2);
-  private static final DefaultNode node3 = new DefaultNode(ADDRESS3);
-
   @Mock private InternalDriverContext context;
+  @Mock private DriverConfig config;
+  @Mock private DriverConfigProfile defaultConfigProfile;
+  private DefaultNode node1;
+  private DefaultNode node2;
+  private DefaultNode node3;
+
+  @Before
+  public void setup() throws Exception {
+    Mockito.when(context.config()).thenReturn(config);
+    Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfigProfile);
+    node1 = new DefaultNode(ADDRESS1, context);
+    node2 = new DefaultNode(ADDRESS2, context);
+    node3 = new DefaultNode(ADDRESS3, context);
+  }
 
   @Test
   public void should_add_and_remove_nodes() {

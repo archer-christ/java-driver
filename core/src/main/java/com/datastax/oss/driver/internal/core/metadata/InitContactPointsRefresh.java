@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -28,10 +29,13 @@ class InitContactPointsRefresh extends MetadataRefresh {
   private static final Logger LOG = LoggerFactory.getLogger(InitContactPointsRefresh.class);
 
   @VisibleForTesting final Set<InetSocketAddress> contactPoints;
+  private final DriverContext context;
 
-  InitContactPointsRefresh(Set<InetSocketAddress> contactPoints, String logPrefix) {
+  InitContactPointsRefresh(
+      Set<InetSocketAddress> contactPoints, DriverContext context, String logPrefix) {
     super(logPrefix);
     this.contactPoints = contactPoints;
+    this.context = context;
   }
 
   @Override
@@ -41,7 +45,7 @@ class InitContactPointsRefresh extends MetadataRefresh {
 
     ImmutableMap.Builder<InetSocketAddress, Node> newNodes = ImmutableMap.builder();
     for (InetSocketAddress address : contactPoints) {
-      newNodes.put(address, new DefaultNode(address));
+      newNodes.put(address, new DefaultNode(address, context));
     }
     return new Result(new DefaultMetadata(newNodes.build(), logPrefix));
     // No token map refresh, because we don't have enough information yet

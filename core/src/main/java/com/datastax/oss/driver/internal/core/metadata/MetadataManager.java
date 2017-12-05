@@ -269,7 +269,7 @@ public class MetadataManager implements AsyncAutoCloseable {
 
     private void initNodes(
         Set<InetSocketAddress> addresses, CompletableFuture<Void> initNodesFuture) {
-      apply(new InitContactPointsRefresh(addresses, logPrefix));
+      apply(new InitContactPointsRefresh(addresses, context, logPrefix));
       initNodesFuture.complete(null);
     }
 
@@ -291,7 +291,7 @@ public class MetadataManager implements AsyncAutoCloseable {
                 address,
                 info.getConnectAddress());
           } else {
-            apply(new AddNodeRefresh(info, logPrefix));
+            apply(new AddNodeRefresh(info, context, logPrefix));
           }
         } else {
           LOG.debug(
@@ -306,7 +306,7 @@ public class MetadataManager implements AsyncAutoCloseable {
     }
 
     private void removeNode(InetSocketAddress address) {
-      apply(new RemoveNodeRefresh(address, logPrefix));
+      apply(new RemoveNodeRefresh(address, context, logPrefix));
     }
 
     private void refreshSchema(

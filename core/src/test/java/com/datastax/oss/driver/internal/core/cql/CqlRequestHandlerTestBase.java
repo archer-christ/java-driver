@@ -17,8 +17,12 @@ package com.datastax.oss.driver.internal.core.cql;
 
 import com.datastax.oss.driver.TestDataProviders;
 import com.datastax.oss.driver.api.core.CoreProtocolVersion;
+import com.datastax.oss.driver.api.core.config.DriverConfig;
+import com.datastax.oss.driver.api.core.config.DriverConfigProfile;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.protocol.internal.Frame;
 import com.datastax.oss.protocol.internal.Message;
 import com.datastax.oss.protocol.internal.ProtocolConstants;
@@ -30,6 +34,7 @@ import com.datastax.oss.protocol.internal.util.Bytes;
 import com.google.common.collect.ImmutableList;
 import com.tngtech.java.junit.dataprovider.DataProvider;
 import com.tngtech.java.junit.dataprovider.DataProviderRunner;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -38,6 +43,7 @@ import java.util.Queue;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 @RunWith(DataProviderRunner.class)
@@ -50,13 +56,23 @@ public abstract class CqlRequestHandlerTestBase {
   protected static final SimpleStatement NON_IDEMPOTENT_STATEMENT =
       SimpleStatement.builder("mock query").withIdempotence(false).build();
 
-  @Mock protected Node node1;
-  @Mock protected Node node2;
-  @Mock protected Node node3;
+  @Mock private InternalDriverContext context;
+  @Mock private DriverConfig config;
+  @Mock private DriverConfigProfile defaultConfigProfile;
+
+  protected Node node1;
+  protected Node node2;
+  protected Node node3;
 
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
+    Mockito.when(context.config()).thenReturn(config);
+    Mockito.when(config.getDefaultProfile()).thenReturn(defaultConfigProfile);
+
+    node1 = new DefaultNode(new InetSocketAddress("127.0.0.1", 9042), context);
+    node2 = new DefaultNode(new InetSocketAddress("127.0.0.2", 9042), context);
+    node3 = new DefaultNode(new InetSocketAddress("127.0.0.3", 9042), context);
   }
 
   protected static Frame defaultFrameOf(Message responseMessage) {

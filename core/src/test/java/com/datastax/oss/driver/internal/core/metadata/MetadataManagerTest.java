@@ -150,7 +150,7 @@ public class MetadataManagerTest {
   @Test
   public void should_refresh_single_node() {
     // Given
-    Node node = new DefaultNode(ADDRESS1);
+    Node node = new DefaultNode(ADDRESS1, context);
     NodeInfo info = Mockito.mock(NodeInfo.class);
     Mockito.when(info.getDatacenter()).thenReturn("dc1");
     Mockito.when(topologyMonitor.refreshNode(node))

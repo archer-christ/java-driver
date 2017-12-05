@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.metadata;
 
 import com.datastax.oss.driver.api.core.CassandraVersion;
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.internal.core.metadata.token.TokenFactory;
 import com.google.common.collect.ImmutableMap;
 import java.util.Collections;
@@ -25,9 +26,11 @@ import org.slf4j.LoggerFactory;
 abstract class NodesRefresh extends MetadataRefresh {
 
   private static final Logger LOG = LoggerFactory.getLogger(NodesRefresh.class);
+  protected final DriverContext context;
 
-  protected NodesRefresh(String logPrefix) {
+  protected NodesRefresh(DriverContext context, String logPrefix) {
     super(logPrefix);
+    this.context = context;
   }
 
   /**

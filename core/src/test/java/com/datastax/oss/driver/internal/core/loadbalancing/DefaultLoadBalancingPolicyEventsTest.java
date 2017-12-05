@@ -16,6 +16,7 @@
 package com.datastax.oss.driver.internal.core.loadbalancing;
 
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
+import com.datastax.oss.driver.internal.core.metadata.DefaultNodeHelper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import org.junit.Before;
@@ -38,7 +39,7 @@ public class DefaultLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPo
   public void setup() {
     super.setup();
 
-    policy = new DefaultLoadBalancingPolicy("dc1", filter, context);
+    policy = new DefaultLoadBalancingPolicy("dc1", 10, filter, context);
     policy.init(
         ImmutableMap.of(ADDRESS1, node1, ADDRESS2, node2),
         distanceReporter,
@@ -107,7 +108,7 @@ public class DefaultLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPo
   @Test
   public void should_ignore_added_node_when_remote_dc() {
     // Given
-    Mockito.when(node3.getDatacenter()).thenReturn("dc2");
+    DefaultNodeHelper.setDatacenter(node3, "dc2");
 
     // When
     policy.onAdd(node3);
@@ -143,7 +144,7 @@ public class DefaultLoadBalancingPolicyEventsTest extends DefaultLoadBalancingPo
   @Test
   public void should_ignore_up_node_when_remote_dc() {
     // Given
-    Mockito.when(node3.getDatacenter()).thenReturn("dc2");
+    DefaultNodeHelper.setDatacenter(node3, "dc2");
 
     // When
     policy.onUp(node3);

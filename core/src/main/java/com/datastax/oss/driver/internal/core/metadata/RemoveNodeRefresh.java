@@ -15,6 +15,7 @@
  */
 package com.datastax.oss.driver.internal.core.metadata;
 
+import com.datastax.oss.driver.api.core.context.DriverContext;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -30,8 +31,8 @@ public class RemoveNodeRefresh extends NodesRefresh {
 
   @VisibleForTesting final InetSocketAddress toRemove;
 
-  RemoveNodeRefresh(InetSocketAddress toRemove, String logPrefix) {
-    super(logPrefix);
+  RemoveNodeRefresh(InetSocketAddress toRemove, DriverContext context, String logPrefix) {
+    super(context, logPrefix);
     this.toRemove = toRemove;
   }
 

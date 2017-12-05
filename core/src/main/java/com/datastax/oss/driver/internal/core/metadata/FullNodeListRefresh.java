@@ -40,7 +40,7 @@ class FullNodeListRefresh extends NodesRefresh {
   private final TokenFactoryRegistry tokenFactoryRegistry;
 
   FullNodeListRefresh(Iterable<NodeInfo> nodeInfos, InternalDriverContext context) {
-    super(context.clusterName());
+    super(context, context.clusterName());
     this.nodeInfos = nodeInfos;
     this.tokenFactoryRegistry = context.tokenFactoryRegistry();
   }
@@ -65,7 +65,7 @@ class FullNodeListRefresh extends NodesRefresh {
       seen.add(address);
       DefaultNode node = (DefaultNode) oldNodes.get(address);
       if (node == null) {
-        node = new DefaultNode(address);
+        node = new DefaultNode(address, context);
         LOG.debug("[{}] Adding new node {}", logPrefix, node);
         added.put(address, node);
       }

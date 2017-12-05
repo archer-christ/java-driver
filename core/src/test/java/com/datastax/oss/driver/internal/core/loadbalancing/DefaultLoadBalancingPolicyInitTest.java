@@ -18,6 +18,7 @@ package com.datastax.oss.driver.internal.core.loadbalancing;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.datastax.oss.driver.api.core.loadbalancing.NodeDistance;
+import com.datastax.oss.driver.internal.core.metadata.DefaultNodeHelper;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -34,7 +35,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
   @Test
   public void should_infer_local_dc_if_no_explicit_contact_points() {
     // Given
-    DefaultLoadBalancingPolicy policy = new DefaultLoadBalancingPolicy(null, filter, context);
+    DefaultLoadBalancingPolicy policy = new DefaultLoadBalancingPolicy(null, 10, filter, context);
 
     // When
     policy.init(
@@ -49,7 +50,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
   @Test
   public void should_require_local_dc_if_explicit_contact_points() {
     // Given
-    DefaultLoadBalancingPolicy policy = new DefaultLoadBalancingPolicy(null, filter, context);
+    DefaultLoadBalancingPolicy policy = new DefaultLoadBalancingPolicy(null, 10, filter, context);
     thrown.expect(IllegalStateException.class);
     thrown.expectMessage("You provided explicit contact points, the local DC must be specified");
 
@@ -60,9 +61,9 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
   @Test
   public void should_warn_if_contact_points_not_in_local_dc() {
     // Given
-    Mockito.when(node2.getDatacenter()).thenReturn("dc2");
-    Mockito.when(node3.getDatacenter()).thenReturn("dc3");
-    DefaultLoadBalancingPolicy policy = new DefaultLoadBalancingPolicy("dc1", filter, context);
+    DefaultNodeHelper.setDatacenter(node2, "dc2");
+    DefaultNodeHelper.setDatacenter(node3, "dc3");
+    DefaultLoadBalancingPolicy policy = new DefaultLoadBalancingPolicy("dc1", 10, filter, context);
 
     // When
     policy.init(
@@ -85,7 +86,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
   @Test
   public void should_include_nodes_from_local_dc() {
     // Given
-    DefaultLoadBalancingPolicy policy = new DefaultLoadBalancingPolicy("dc1", filter, context);
+    DefaultLoadBalancingPolicy policy = new DefaultLoadBalancingPolicy("dc1", 10, filter, context);
 
     // When
     policy.init(
@@ -103,9 +104,9 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
   @Test
   public void should_ignore_nodes_from_remote_dcs() {
     // Given
-    Mockito.when(node2.getDatacenter()).thenReturn("dc2");
-    Mockito.when(node3.getDatacenter()).thenReturn("dc3");
-    DefaultLoadBalancingPolicy policy = new DefaultLoadBalancingPolicy("dc1", filter, context);
+    DefaultNodeHelper.setDatacenter(node2, "dc2");
+    DefaultNodeHelper.setDatacenter(node3, "dc3");
+    DefaultLoadBalancingPolicy policy = new DefaultLoadBalancingPolicy("dc1", 10, filter, context);
 
     // When
     policy.init(
@@ -126,7 +127,7 @@ public class DefaultLoadBalancingPolicyInitTest extends DefaultLoadBalancingPoli
     Mockito.when(filter.test(node2)).thenReturn(false);
     Mockito.when(filter.test(node3)).thenReturn(false);
 
-    DefaultLoadBalancingPolicy policy = new DefaultLoadBalancingPolicy("dc1", filter, context);
+    DefaultLoadBalancingPolicy policy = new DefaultLoadBalancingPolicy("dc1", 10, filter, context);
 
     // When
     policy.init(

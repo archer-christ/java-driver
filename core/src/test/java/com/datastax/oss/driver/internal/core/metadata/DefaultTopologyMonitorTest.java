@@ -84,8 +84,8 @@ public class DefaultTopologyMonitorTest {
     Mockito.when(controlConnection.channel()).thenReturn(channel);
     Mockito.when(context.controlConnection()).thenReturn(controlConnection);
 
-    node1 = new DefaultNode(ADDRESS1);
-    node2 = new DefaultNode(ADDRESS2);
+    node1 = new DefaultNode(ADDRESS1, context);
+    node2 = new DefaultNode(ADDRESS2, context);
 
     topologyMonitor = new TestTopologyMonitor(context);
   }

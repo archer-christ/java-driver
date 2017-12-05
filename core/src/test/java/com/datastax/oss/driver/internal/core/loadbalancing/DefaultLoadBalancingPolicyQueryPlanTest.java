@@ -73,7 +73,7 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancin
 
     // Use a subclass to disable shuffling, we just spy to make sure that the shuffling method was
     // called (makes tests easier)
-    policy = Mockito.spy(new NonShufflingPolicy("dc1", filter, context));
+    policy = Mockito.spy(new NonShufflingPolicy("dc1", 10, filter, context));
     policy.init(
         ImmutableMap.of(
             ADDRESS1, node1,
@@ -226,8 +226,11 @@ public class DefaultLoadBalancingPolicyQueryPlanTest extends DefaultLoadBalancin
 
   static class NonShufflingPolicy extends DefaultLoadBalancingPolicy {
     NonShufflingPolicy(
-        String localDcFromConfig, Predicate<Node> filterFromConfig, DriverContext context) {
-      super(localDcFromConfig, filterFromConfig, context);
+        String localDcFromConfig,
+        int slowNodeRateFromConfig,
+        Predicate<Node> filterFromConfig,
+        DriverContext context) {
+      super(localDcFromConfig, slowNodeRateFromConfig, filterFromConfig, context);
     }
 
     @Override

@@ -27,6 +27,7 @@ import com.datastax.oss.driver.api.core.metadata.token.Token;
 import com.datastax.oss.driver.api.core.session.Request;
 import com.datastax.oss.driver.api.core.session.Session;
 import com.datastax.oss.driver.internal.core.context.InternalDriverContext;
+import com.datastax.oss.driver.internal.core.metadata.DefaultNode;
 import com.datastax.oss.driver.internal.core.metadata.MetadataManager;
 import com.datastax.oss.driver.internal.core.pool.ChannelPool;
 import com.datastax.oss.driver.internal.core.session.DefaultSession;
@@ -43,6 +44,7 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntUnaryOperator;
 import java.util.function.Predicate;
@@ -57,27 +59,35 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
 
   private final String logPrefix;
   private final MetadataManager metadataManager;
+  private final int slowNodeRate;
   private final Predicate<Node> filter;
-  private final AtomicInteger startIndex = new AtomicInteger();
+  private final AtomicInteger roundRobinAmount = new AtomicInteger();
   @VisibleForTesting final CopyOnWriteArraySet<Node> localDcLiveNodes = new CopyOnWriteArraySet<>();
 
   private volatile DistanceReporter distanceReporter;
   @VisibleForTesting volatile String localDc;
 
   public DefaultLoadBalancingPolicy(DriverContext context) {
-    this(getLocalDcFromConfig(context), getFilterFromConfig(context), context);
+    this(
+        getLocalDcFromConfig(context),
+        getSlowRateFromConfig(context),
+        getFilterFromConfig(context),
+        context);
   }
 
   @VisibleForTesting
   DefaultLoadBalancingPolicy(
-      String localDcFromConfig, Predicate<Node> filterFromConfig, DriverContext context) {
+      String localDcFromConfig,
+      int slowNodeRateFromConfig,
+      Predicate<Node> filterFromConfig,
+      DriverContext context) {
     this.logPrefix = context.clusterName();
     this.metadataManager = ((InternalDriverContext) context).metadataManager();
     if (localDcFromConfig != null) {
       LOG.debug("[{}] Local DC set from configuration: {}", logPrefix, localDcFromConfig);
       this.localDc = localDcFromConfig;
     }
-
+    this.slowNodeRate = slowNodeRateFromConfig;
     this.filter =
         node -> {
           String localDc = this.localDc;
@@ -178,17 +188,44 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
 
     LOG.trace("[{}] Prioritizing {} local replicas", logPrefix, replicaCount);
 
-    ConcurrentLinkedQueue<Node> queryPlan = new ConcurrentLinkedQueue<>();
-    // Copy the replicas as-is (we've already shuffled/ordered them)
-    for (int i = 0; i < replicaCount; i++) {
-      queryPlan.offer((Node) currentNodes[i]);
-    }
     // Round-robin the remaining nodes
-    int remaining = currentNodes.length - replicaCount;
-    int myStartIndex = startIndex.getAndUpdate(INCREMENT);
-    for (int i = 0; i < remaining; i++) {
-      Node node = (Node) currentNodes[replicaCount + (myStartIndex + i) % remaining];
-      queryPlan.offer(node);
+    ArrayUtils.rotate(
+        currentNodes,
+        replicaCount,
+        currentNodes.length - replicaCount,
+        roundRobinAmount.getAndUpdate(INCREMENT));
+
+    // Handle slow nodes; isSlow() is the most expensive operation, so we want to call it just once
+    // per node (which is why things might look a bit weird below).
+    int slowNodeCount = 0;
+    int firstSlowNodePreviousIndex = -1;
+    // Move slow nodes at the end of the plan. We start from the end so that if all nodes are slow,
+    // the plan is left unchanged.
+    for (int i = currentNodes.length - 1; i >= 0; i--) {
+      DefaultNode node = (DefaultNode) currentNodes[i];
+      if (node.isSlow()) {
+        slowNodeCount += 1;
+        firstSlowNodePreviousIndex = i;
+        ArrayUtils.bubbleDown(currentNodes, i, currentNodes.length - slowNodeCount);
+      }
+    }
+    // Every once in a while, keep the first slow node in its original position
+    if (slowNodeCount > 0) {
+      if (ThreadLocalRandom.current().nextInt(100) < slowNodeRate) {
+        LOG.trace(
+            "[{}] Deprioritizing {} slow nodes but keeping the first one in its original position",
+            logPrefix,
+            slowNodeCount - 1);
+        ArrayUtils.bubbleUp(
+            currentNodes, currentNodes.length - slowNodeCount, firstSlowNodePreviousIndex);
+      } else {
+        LOG.trace("[{}] Deprioritizing {} slow nodes", logPrefix, slowNodeCount);
+      }
+    }
+
+    ConcurrentLinkedQueue<Node> queryPlan = new ConcurrentLinkedQueue<>();
+    for (Object node : currentNodes) {
+      queryPlan.offer(((Node) node));
     }
     return queryPlan;
   }
@@ -290,6 +327,10 @@ public class DefaultLoadBalancingPolicy implements LoadBalancingPolicy {
     return (config.isDefined(CoreDriverOption.LOAD_BALANCING_LOCAL_DATACENTER))
         ? config.getString(CoreDriverOption.LOAD_BALANCING_LOCAL_DATACENTER)
         : null;
+  }
+
+  private static int getSlowRateFromConfig(DriverContext context) {
+    return context.config().getDefaultProfile().getInt(CoreDriverOption.LOAD_BALANCING_SLOW_RATE);
   }
 
   @SuppressWarnings("unchecked")

@@ -48,7 +48,6 @@ import static org.mockito.ArgumentMatchers.any;
 abstract class ChannelPoolTestBase {
 
   static final InetSocketAddress ADDRESS = new InetSocketAddress("localhost", 9042);
-  static final Node NODE = new DefaultNode(ADDRESS);
 
   @Mock InternalDriverContext context;
   @Mock private DriverConfig config;
@@ -59,6 +58,7 @@ abstract class ChannelPoolTestBase {
   @Mock ChannelFactory channelFactory;
   EventBus eventBus;
   private DefaultEventLoopGroup adminEventLoopGroup;
+  protected Node node;
 
   @Before
   public void setup() {
@@ -79,6 +79,8 @@ abstract class ChannelPoolTestBase {
     // By default, set a large reconnection delay. Tests that care about reconnection will override
     // it.
     Mockito.when(reconnectionSchedule.nextDelay()).thenReturn(Duration.ofDays(1));
+
+    node = new DefaultNode(ADDRESS, context);
   }
 
   @After
